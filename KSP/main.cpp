@@ -325,6 +325,22 @@ void drawObject (vector<Object> objects, double xpos, double ypos, double zpos) 
     }
 }
 
+// This void method renders a string (s) onto the screen at the given coordinates x, y with a given font
+void renderString (double x, double y, void* font, string s) {
+
+    // Set the rasterization coordinates
+    glRasterPos2i(x, y);
+
+    // Iterate through each character and render it independently
+    for (char c : s) {
+
+        // Draw the bitmap of the current character
+        glutBitmapCharacter(font, c);
+
+    }
+
+}
+
 // This integer will represent the current stage of the game
 int stage = 0;
 
@@ -377,6 +393,28 @@ void initMenu (vector<vector<Object> > items) {
         menu.push_back(temp);
 
     }
+
+}
+
+// This void method draws the intro screen
+void drawIntroScreen () {
+
+    // Draw a black background
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+
+    // Render the introduction text across the screen
+
+    // Set the draw color to white
+    glColor3f(1.0, 1.0, 1.0);
+
+    // Render the intro text as seperate lines
+    renderString(10, 700, GLUT_BITMAP_HELVETICA_18, "You are the fearless Space Commander in Chief (SCC) of an alien race");
+    renderString(10, 650, GLUT_BITMAP_HELVETICA_18, "named the Kerugami. Posed with the previously thought insurmountable");
+    renderString(10, 600, GLUT_BITMAP_HELVETICA_18, "objective of making the Kerugami a space-faring species, you are given");
+    renderString(10, 550, GLUT_BITMAP_HELVETICA_18, "the necessary components to build and launch a rocket. ");
+    renderString(200, 400, GLUT_BITMAP_HELVETICA_18, "Are you ready to take on this daunting task?");
+    renderString(750, 250, GLUT_BITMAP_HELVETICA_18, " Press Y for YES");
+    renderString(520, 200, GLUT_BITMAP_HELVETICA_12, " [No has not been added as a feature to the game]");
 
 }
 
@@ -568,8 +606,22 @@ void display(void) {
     glLoadIdentity();
     glOrtho(0, 1000, 0, 1000, -1200, 1200);
 
-    // Draw the rocket assembly screen
-    drawRocketAssembly();
+    // Draw the appropriate "stage" of the game depending on the user response
+    switch (stage) {
+
+        // Stage 0: intro screen
+        case 0:
+            // Draw the intro screen
+            drawIntroScreen();
+            break;
+
+        // Stage 1: rocket assembly screen
+        case 1:
+            // Draw the rocket assembly screen
+            drawRocketAssembly();
+            break;
+
+    }
 
     // Flushing the matrix to the cache for double buffering
     glutSwapBuffers();
@@ -607,9 +659,9 @@ void init() {
 
 void manipulateObjects (int x, int y) {
 
-    if (mhold) {
+    if (stage == 1 && mhold) {
 
-        // Center mouse button is being held, update newest x and y coordinate changes
+        // Center mouse button is being held while in the rocket assembly stage, update newest x and y coordinate changes
 
         gpx1 = gpx2;
         gpy1 = gpy2;
@@ -648,10 +700,10 @@ void manipulateObjects (int x, int y) {
 // This method will listen for all mouse button controls. This includes adjusting the global assembly perspective and
 void mouseListner (int button, int state, int x, int y) {
 
-    // Global viewing perspective changes (middle mouse button)
+    // Global viewing perspective changes (middle mouse button) in the rocket assembly stage (stage = 1)
 
     // Get the change in x and change in x to determine rotation angle. Use solidworks controls (center mouse button while held)
-    if (button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN) {
+    if (stage == 1 && button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN) {
 
         // Update mouse down to alert mouse move check
         mhold = true;
@@ -669,10 +721,10 @@ void mouseListner (int button, int state, int x, int y) {
         mhold = false;
     }
 
-    // Menu component selection (left mouse button click)
+    // Menu component selection (left mouse button click) in the rocket assembly stage (stage = 1)
 
     // Listner activated for a menu selection. Update the click position
-    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+    if (stage == 1 && button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 
         // Scale the click position to be between 0 and 1000 instead of 0 and 600
 
@@ -688,8 +740,8 @@ void mouseListner (int button, int state, int x, int y) {
 
 void manipulateSelectedComponent (unsigned char key, int x, int y) {
 
-    // Check to see if the key pressed was to select a certain component in the workspace (ascii values 48 - 57)
-    if (key >= 48 && key <= 57 && (key - 48) < workspace.size()) {
+    // Check to see if the key pressed was to select a certain component in the workspace (ascii values 48 - 57). Only actiavted while in the rocket assembly stage (stage = 1)
+    if (stage == 1 && key >= 48 && key <= 57 && (key - 48) < workspace.size()) {
 
         if (selected != -1) {
             // Update all the point values of the previous object
