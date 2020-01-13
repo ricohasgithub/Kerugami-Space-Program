@@ -245,7 +245,6 @@ vector<Object> loadObject (string fName) {
 
     }
 
-    cout << "Models Loaded!" << endl;
 }
 
 // This method takes in an object and scales it down to an input range
@@ -427,8 +426,8 @@ void drawIntroScreen () {
 void drawMenu () {
 
     // Double variables used to keep track of the starting position of each draw
-    double startX = 0.0;
-    double startY = 750.0;
+    double startX = 5.0;
+    double startY = 725.0;
     double startZ = 1000.0;
 
     for (vector<Object> component : menu) {
@@ -465,6 +464,19 @@ void drawMenu () {
         startY -= 250;
 
     }
+
+    // Draw user instructions (in text) underneath menu
+
+    // Set the text drawing color to black
+    glColor3f(0.0, 0.0, 0.0);
+
+    // Draw text with user instruction menu
+    renderString(10, 180, GLUT_BITMAP_HELVETICA_12, "Use middle mouse button to rotate");
+    renderString(10, 145, GLUT_BITMAP_HELVETICA_12, "Left click on menu item to add a part");
+    renderString(10, 110, GLUT_BITMAP_HELVETICA_12, "Press 0-9 to select an unassembled part");
+    renderString(10, 75, GLUT_BITMAP_HELVETICA_12, "Press W,A,S,D,P,L to move selected part");
+    renderString(10, 40, GLUT_BITMAP_HELVETICA_12, "Press U to assemble wokspace");
+    renderString(10, 15, GLUT_BITMAP_HELVETICA_12, "(Assembled parts cannot be moved)");
 
 }
 
@@ -605,6 +617,7 @@ void drawRocketAssembly () {
 
 }
 
+// This is the default display method called by redraws. It contains code to distinguish the current stage of the game and draw the appropriate screen
 void display(void) {
 
     // Clear the current color and depth buffer
