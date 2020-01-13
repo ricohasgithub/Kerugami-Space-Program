@@ -1,0 +1,3 @@
+C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/booster.obj
+C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/apollo.obj
+C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/rocket2.obj

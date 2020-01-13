@@ -125,11 +125,10 @@ vector<Object> loadObject (string fName) {
         if (line.substr(0,2) == "o ")
         {
 
+            // Create a new object and add it to the objects vector. Increment the index of the current object
             Object newO;
             objects.push_back(newO);
             cObj++;
-
-            cout << "New object added" << endl;
 
         }
         else if (line.substr(0,2) == "v ")
@@ -138,7 +137,10 @@ vector<Object> loadObject (string fName) {
             // The current line contains a point for a vertex. Create a point and push it to the back of the current object's vertex
             Point3D tempP;
 
+            // Read the current point/vertice
             istringstream sParser(line.substr(2));
+
+            // Parse the x, y and z coordinates into the current object
             sParser >> tempP.x;
             //sParser >> tempP.y;
             //sParser >> tempP.z;
@@ -146,7 +148,7 @@ vector<Object> loadObject (string fName) {
             sParser >> tempP.z;
             sParser >> tempP.y;
 
-            // Check to see if each coordinate is the currently assumed greatest value (maximum)
+            // Check to see if each coordinate is the currently assumed greatest value (maximum); if so, update the current max values
             if (tempP.x > maxX) {
                 maxX = tempP.x;
             }
@@ -159,7 +161,7 @@ vector<Object> loadObject (string fName) {
                 maxZ = tempP.z;
             }
 
-            // Check to see if each coordinate is the currently assumed smallest value (minimum)
+            // Check to see if each coordinate is the currently assumed smallest value (minimum); if so, update the current min values
             if (tempP.x < minX) {
                 minX = tempP.x;
             }
@@ -172,6 +174,7 @@ vector<Object> loadObject (string fName) {
                 minZ = tempP.z;
             }
 
+            // Add the new point into the current vertices vector in the current object being loaded
             objects[cObj].vertices.push_back(tempP);
 
         }
@@ -186,11 +189,13 @@ vector<Object> loadObject (string fName) {
             // Tokenize the string line and read each token
             istringstream sParser(line.substr(2));
 
+            // Read each index of the eadges used. Assume that there is a fourth vertice (some file formats do)
             sParser >> as;
             sParser >> bs;
             sParser >> cs;
             sParser >> ds;
 
+            // Read the first 3 vertice indexes first for future drawing refenece
             int a = stoi(as.substr(0,as.find("/")));
             int b = stoi(bs.substr(0,bs.find("/")));
             int c = stoi(cs.substr(0,cs.find("/")));
@@ -635,24 +640,39 @@ void idle(void) {
     glutPostRedisplay();
 }
 
+// This void method takes in a filepath/filename for the components text file and then buffers and prepares the entire components vector
+void loadComponents (string filename) {
+
+    // Initialize a new file parser to read from the components filename
+    ifstream fParser(filename.c_str());
+
+    if (!fParser)
+    {
+        cout << "Invalid File!" << endl;
+        return;
+    }
+
+    // Temporary string variable used to read every component filename at every line
+    string componentFileName;
+
+    // Read through every line in the file and load every file into the components vector
+    while (getline(fParser, componentFileName)) {
+
+        // Load the current line/filename into the components vector as a new object
+        components.push_back(loadObject(componentFileName));
+
+    }
+
+}
+
 // This method opens the .obj files and parses them to load the object models
 void init() {
-
-    // Blank template Point3D struct for future reference
-    Point3D blank;
-    blank.x = 0.0;
-    blank.y = 0.0;
-    blank.z = 0.0;
 
     // The number of components
     int fLength = 3;
 
-    // The directory locatino od the .obj object model file
-    string fName[] = {"C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/booster.obj", "C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/apollo.obj", "C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/rocket2.obj"};
-
-    for (int i=0; i<fLength; i++) {
-        components.push_back(loadObject(fName[i]));
-    }
+    // Load all the components into the components vector
+    loadComponents("C://Users/ricoz/Desktop/C++ Workspace/Kerugami-Space-Program/KSP/Components.txt");
 
     // Initialize the menu once the components have been loaded
     initMenu(components);
