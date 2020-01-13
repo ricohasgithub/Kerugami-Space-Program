@@ -413,7 +413,7 @@ void drawIntroScreen () {
     renderString(10, 600, GLUT_BITMAP_HELVETICA_18, "objective of making the Kerugami a space-faring species, you are given");
     renderString(10, 550, GLUT_BITMAP_HELVETICA_18, "the necessary components to build and launch a rocket. ");
     renderString(200, 400, GLUT_BITMAP_HELVETICA_18, "Are you ready to take on this daunting task?");
-    renderString(750, 250, GLUT_BITMAP_HELVETICA_18, " Press Y for YES");
+    renderString(670, 250, GLUT_BITMAP_HELVETICA_18, " Press SPACE for YES");
     renderString(520, 200, GLUT_BITMAP_HELVETICA_12, " [No has not been added as a feature to the game]");
 
 }
@@ -452,7 +452,7 @@ void drawMenu () {
             glVertex3d(startX, startY + 250, 1200);
         glEnd();
 
-        // Draw the actual mini-sized model
+        // Draw the actual mini-sized model at the correct starting position
 
         glColor3f(0, 0, 1);
 
@@ -469,9 +469,8 @@ void updateWorkspace () {
     // Check to see if the mouse left click selection lands on a valid menu item. Each menu item is bounded by a 250 by 250 box
     if (leftX <= 250) {
 
+        // Get the current index of the selected component in the workspace based off the click position
         int index = (int) (leftY/250);
-
-        cout << index << endl;
 
         // Check to see if the X value is inside the range of the menu
         if (index < menu.size()) {
@@ -527,6 +526,9 @@ void setPreTranslate (vector< vector <Object> > &components, int index, int nx, 
 
 // This void method draws the entire rocket assembly screen
 void drawRocketAssembly () {
+
+    // Draw a white background
+    glClearColor(1.0, 1.0, 1.0, 0.0);
 
     // Draw each of the different components in the current assembly
     for (int i=0; i<assembly.components.size(); i++) {
@@ -738,59 +740,85 @@ void mouseListner (int button, int state, int x, int y) {
 
 }
 
-void manipulateSelectedComponent (unsigned char key, int x, int y) {
+void keyboardListener (unsigned char key, int x, int y) {
 
-    // Check to see if the key pressed was to select a certain component in the workspace (ascii values 48 - 57). Only actiavted while in the rocket assembly stage (stage = 1)
-    if (stage == 1 && key >= 48 && key <= 57 && (key - 48) < workspace.size()) {
+    // Check for the current stage of the game; key actions will change depending on the state
+    switch (stage) {
 
-        if (selected != -1) {
-            // Update all the point values of the previous object
-            setPreTranslate(workspace, selected, sxpos, sypos, szpos);
-        }
+        case 0:
 
-        // The key is a number key and the value is valid (there are that many componenets)
-        selected = key - 48;
+            // Stage 0: Intro text screen
 
-        // Reset the translation position of the object
-        sxpos = 0;
-        sypos = 0;
-        szpos = 0;
+            if (key == 32) {
 
-    }
+                // Player pressed space bar, move onto next stage (rocket assembly, stage 1)
+                stage = 1;
+                // Draw the new screen
+                glutPostRedisplay();
 
-    // Move the appropriate objects if an object is selected and a key is pressed to mvoe the selected component
-    if (selected != -1 && key == 'w') {
-        // Increase the y value of the selected component
-        sypos += 1;
-    } else if (selected != -1 && key == 's') {
-        // Decrease the y value of the selected component
-        sypos -= 1;
-    } else if (selected != -1 && key == 'a') {
-        // Decrease the x value of the selected component
-        sxpos -= 1;
-    } else if (selected != -1 && key == 'd') {
-        // Increase the x value of the selected component
-        sxpos += 1;
-    } else if (selected != -1 && key == 'p') {
-        // Increase the z value of the selected component
-        szpos += 1;
-    } else if (selected != -1 && key == 'l') {
-        // Decrease the z value of the selected component
-        szpos -= 1;
-    }
+            }
 
-    if (key == 'u') {
+            break;
 
-        // If there has been a translation/modification
-        if (selected != -1) {
-            // Update all the point values of the current workspace
-            setPreTranslate(workspace, selected, sxpos, sypos, szpos);
-        }
+        case 1:
 
-        // Assemble all existing components in the workspace together
-        assembleComponents(workspace);
-        // Reset the selected variable as no item is selected
-        selected = -1;
+            // Stage 1: Rocket assembly stage
+
+            // Check to see if the key pressed was to select a certain component in the workspace (ascii values 48 - 57). Only actiavted while in the rocket assembly stage (stage = 1)
+            if (key >= 48 && key <= 57 && (key - 48) < workspace.size()) {
+
+                if (selected != -1) {
+                    // Update all the point values of the previous object
+                    setPreTranslate(workspace, selected, sxpos, sypos, szpos);
+                }
+
+                // The key is a number key and the value is valid (there are that many componenets)
+                selected = key - 48;
+
+                // Reset the translation position of the object
+                sxpos = 0;
+                sypos = 0;
+                szpos = 0;
+
+            }
+
+            // Move the appropriate objects if an object is selected and a key is pressed to mvoe the selected component
+            if (selected != -1 && key == 'w') {
+                // Increase the y value of the selected component
+                sypos += 5;
+            } else if (selected != -1 && key == 's') {
+                // Decrease the y value of the selected component
+                sypos -= 5;
+            } else if (selected != -1 && key == 'a') {
+                // Decrease the x value of the selected component
+                sxpos -= 5;
+            } else if (selected != -1 && key == 'd') {
+                // Increase the x value of the selected component
+                sxpos += 5;
+            } else if (selected != -1 && key == 'p') {
+                // Increase the z value of the selected component
+                szpos += 5;
+            } else if (selected != -1 && key == 'l') {
+                // Decrease the z value of the selected component
+                szpos -= 5;
+            }
+
+            if (key == 'u') {
+
+                // If there has been a translation/modification
+                if (selected != -1) {
+                    // Update all the point values of the current workspace
+                    setPreTranslate(workspace, selected, sxpos, sypos, szpos);
+                }
+
+                // Assemble all existing components in the workspace together
+                assembleComponents(workspace);
+                // Reset the selected variable as no item is selected
+                selected = -1;
+            }
+
+            break;
+
     }
 
 }
@@ -824,7 +852,7 @@ int main( int argc, char **argv )
     // Set the mouse motion/move function
     glutMotionFunc(manipulateObjects);
     // Set the keyboard function
-    glutKeyboardFunc(manipulateSelectedComponent);
+    glutKeyboardFunc(keyboardListener);
     // Clear the background
     glClearColor(1,1,1,1);
 
