@@ -1,15 +1,15 @@
 C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/booster.obj
 100
-50
-80
-20
+100
+1
+0.05
 C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/apollo.obj
 600
 90
 10
 10
 C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/rocket2.obj
-500
 100
-150
-40
+1000
+1
+0.05

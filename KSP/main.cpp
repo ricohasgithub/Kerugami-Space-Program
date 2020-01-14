@@ -391,6 +391,25 @@ bool mhold = false;
 // Global Perspective (gp) middle mouse button values (delta x, delta y, current x + y)
 int gpx1, gpx2, gpy1, gpy2, gpcx, gpcy;
 
+// Physics engine values - The following variables are constants for simulating a rocket launch
+
+// The current state of the rocket (assembly)
+double totalMass = 0;
+double totalThrust = 0;
+double totalLift = 0;
+double totalDrag = 0;
+
+// The vertical position at any point in time
+double v_pos = 0.0;
+// The vertical velocity at any point in time
+double v_vel = 0.0;
+
+// The last time the time is recorded (used to record the change in, delta, time)
+double dtime = 0.0;
+
+// Gravitational acceleration on the surface of the Earth (assuming no increase in decelleration as rocket gors further up)
+const double g_accl = -9.8;
+
 // This void method takes in a list of items to be displayed "rotating" in display menu. The screen is assumed to be (0, 1000, 0, 1000, -1000, 1000). The method pipes the scaled models to the menu global vector
 void initMenu (vector<vector<Object> > items) {
 
@@ -631,14 +650,14 @@ void drawRocketAssembly () {
 
 }
 
-// This void method does translation operations on the assembled rocket based on its physics engine values
-void launchRocket () {
+// This void method sets up the constants for the current iteration of the rocket (assembly)
+void updateRocketPhysics () {
 
-    // Physics engine values  used to store total physics values
-    double totalMass = 0;
-    double totalThrust = 0;
-    double totalLift = 0;
-    double totalDrag = 0;
+    // Zero all previous rocket values
+    totalMass = 0;
+    totalThrust = 0;
+    totalLift = 0;
+    totalDrag = 0;
 
     // Get the total values for mass, thrust, lift and drag on the rocket (assembly). Iterate through the entire assembly and retireve all components (and included subcomponent) data
     for (vector<Object> temp_components : assembly.components) {
@@ -655,6 +674,64 @@ void launchRocket () {
         }
 
     }
+
+    // Update the initial vertical velocity to the total starting thrust
+    v_vel = totalThrust;
+
+}
+
+// This void method does translation operations on the assembled rocket based on its physics engine values
+void launchRocket () {
+
+    if (v_pos < 0) {
+
+        // If the rocket crashed (goes below groun), stop further calls
+        return;
+
+    }
+
+    // Get the curretn elapsed time
+    const double time = glutGet(GLUT_ELAPSED_TIME) / 10000.0;
+
+    // The current vertical acceleration
+    double v_accl = g_accl;
+
+    // Calculate the horizontal and vertical acceleration and velocity: Thrust is the initial vertical velocity, Lift is the initial vertical accelleration, and Drag is the rate of vertical decelleration (for thrust to decrease till 0)
+
+    // First, calculate additional vertical acceleration (lift minus drag)
+    if (totalLift > 0) {
+
+        // Get the total vertical acceleration by adding the current total lift to it
+        v_accl += totalLift;
+
+        // Decrease lift further if it is not already zero
+        totalLift -= totalDrag;
+
+    } else if (totalLift < 0) {
+
+        // If the lift is less than 0, set to to zero (drag should only decrease additional vertical acceleration)
+        totalLift = 0;
+
+        // Reset the vertical acceleration to only the gravitational decelleration
+        v_accl = g_accl;
+
+    }
+
+    // Get the change in time
+    dtime = time - dtime;
+
+    // Update the vertical velocity (accumulated acceleration over time)
+    v_vel += v_accl * dtime;
+    // update the vertical position (accumulated velocity over time)
+    v_pos += v_vel * dtime;
+
+    cout << "Position: " << v_pos << endl;
+    cout << "Velocity: " << v_vel << endl;
+    cout << "Acceleration: " << v_accl << endl;
+
+
+
+    // Draw the rocket
 
 }
 
@@ -680,6 +757,11 @@ void display(void) {
         case 1:
             // Draw the rocket assembly screen
             drawRocketAssembly();
+            break;
+
+        // Stage 2: rocket launch screen
+        case 2:
+            launchRocket();
             break;
 
     }
@@ -859,13 +941,30 @@ void keyboardListener (unsigned char key, int x, int y) {
                 // Draw the new screen
                 glutPostRedisplay();
 
-            }
+                // Stop the keyboard listening call right away
+                break;
 
-            break;
+            }
 
         case 1:
 
             // Stage 1: Rocket assembly stage
+
+            if (key == 32) {
+
+                // Player pressed space bar, move onto next stage (rocket launch, stage 2)
+                stage = 2;
+
+                // Update the current state of the newly assembled rocket
+                updateRocketPhysics();
+
+                // Draw the new screen
+                glutPostRedisplay();
+
+                // Stop the keyboard listening call right away
+                break;
+
+            }
 
             // Check to see if the key pressed was to select a certain component in the workspace (ascii values 48 - 57). Only actiavted while in the rocket assembly stage (stage = 1)
             if (key >= 48 && key <= 57 && (key - 48) < workspace.size()) {
