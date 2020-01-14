@@ -24,7 +24,7 @@ struct Point3D
     double z;
 };
 
-// This struct is used to represent one object (loaded from a .obj file)
+// This struct is used to represent one object (loaded from a .obj file). It contains a list of the points and all the vectors for drawing the faces. It contains the max and min coordinates of every axis for scaling. It also contains physics info about the use of the component.
 struct Object
 {
 
@@ -42,6 +42,11 @@ struct Object
 
     double maxZ;
     double minZ;
+
+    double mass;
+    double thrust;
+    double lift;
+    double drag;
 
 };
 
@@ -284,12 +289,17 @@ Object scaleObject (Object obj, double nMaxX, double nMinX, double nMaxY, double
 // This void method draws vector of objects with a translation of xpos, ypos, zpos
 void drawObject (vector<Object> objects, double xpos, double ypos, double zpos) {
 
+    // Draw every object inside the given objects vector
     for (int m=0; m<objects.size(); m++) {
 
+        // Retrieve the vector of vertices (all points to be drawn)
         vector<Point3D> vertices = objects[m].vertices;
+
+        // Retrieve the list of indexs to draw the triangles and polygonal faces
         vector<int> triangles = objects[m].triangles;
         vector<int> polygons = objects[m].polygons;
 
+        // Draw all triangles
         for (int i=0; i<triangles.size(); i+=3) {
 
             // First element refers to index of vertex, draw triangle based off of points
@@ -297,6 +307,7 @@ void drawObject (vector<Object> objects, double xpos, double ypos, double zpos) 
             Point3D cVertex2 = vertices[triangles[i+1]];
             Point3D cVertex3 = vertices[triangles[i+2]];
 
+            // Draw each triangle as a new line frame
             glBegin(GL_LINE_STRIP);
 
                 glVertex3d(cVertex1.x + xpos, cVertex1.y + ypos, cVertex1.z + zpos);
@@ -307,16 +318,19 @@ void drawObject (vector<Object> objects, double xpos, double ypos, double zpos) 
 
         }
 
+        // Draw all quadrealateral polygonal frames
         for (int i=0; i<polygons.size(); i+=4) {
 
-            // First element refers to index of vertex, draw triangle based off of points
+            // First element refers to index of vertex, draw polygon based off of points
             Point3D cVertex1 = vertices[polygons[i]];
             Point3D cVertex2 = vertices[polygons[i+1]];
             Point3D cVertex3 = vertices[polygons[i+2]];
             Point3D cVertex4 = vertices[polygons[i+3]];
 
+            // Draw the shape as a line frame
             glBegin(GL_LINE_STRIP);
 
+                // Draw the four edges of the line strip (with translation)
                 glVertex3d(cVertex1.x + xpos, cVertex1.y + ypos, cVertex1.z + zpos);
                 glVertex3d(cVertex2.x + xpos, cVertex2.y + ypos, cVertex2.z + zpos);
                 glVertex3d(cVertex3.x + xpos, cVertex3.y + ypos, cVertex3.z + zpos);
@@ -617,6 +631,33 @@ void drawRocketAssembly () {
 
 }
 
+// This void method does translation operations on the assembled rocket based on its physics engine values
+void launchRocket () {
+
+    // Physics engine values  used to store total physics values
+    double totalMass = 0;
+    double totalThrust = 0;
+    double totalLift = 0;
+    double totalDrag = 0;
+
+    // Get the total values for mass, thrust, lift and drag on the rocket (assembly). Iterate through the entire assembly and retireve all components (and included subcomponent) data
+    for (vector<Object> temp_components : assembly.components) {
+
+        // Iterate through all sub components in the assembly
+        for (Object obj : temp_components) {
+
+            // Accumulate physics engine values
+            totalMass += obj.mass;
+            totalThrust += obj.thrust;
+            totalLift += obj.lift;
+            totalDrag += obj.drag;
+
+        }
+
+    }
+
+}
+
 // This is the default display method called by redraws. It contains code to distinguish the current stage of the game and draw the appropriate screen
 void display(void) {
 
@@ -672,7 +713,34 @@ void loadComponents (string filename) {
     while (getline(fParser, componentFileName)) {
 
         // Load the current line/filename into the components vector as a new object
-        components.push_back(loadObject(componentFileName));
+        vector<Object> temp_components = loadObject(componentFileName);
+
+        // Temporary string variable used to read the following lines for physics engine data
+        string temp;
+
+        // Read the physics data from the following lines and add them to the component. The order goes: mass, thrust, lift and drag
+        getline(fParser, temp);
+        double mass = stod(temp);
+        getline(fParser, temp);
+        double thrust = stod(temp);
+        getline(fParser, temp);
+        double lift = stod(temp);
+        getline(fParser, temp);
+        double drag = stod(temp);
+
+        // Add the data to each sub-component of the component
+        for (int i=0; i<temp_components.size(); i++) {
+
+            // Get the current component update its physics engine parameters
+            temp_components[i].mass = mass;
+            temp_components[i].thrust = thrust;
+            temp_components[i].lift = lift;
+            temp_components[i].drag = drag;
+
+        }
+
+        // Add the component into the components vector
+        components.push_back(temp_components);
 
     }
 
@@ -692,6 +760,7 @@ void init() {
 
 }
 
+// This method enables global perspective via the middle mouse button (during rocket assembly stage)
 void manipulateObjects (int x, int y) {
 
     if (stage == 1 && mhold) {
@@ -773,6 +842,7 @@ void mouseListner (int button, int state, int x, int y) {
 
 }
 
+// This method listens for keyboard events during the individual stages of the game
 void keyboardListener (unsigned char key, int x, int y) {
 
     // Check for the current stage of the game; key actions will change depending on the state
