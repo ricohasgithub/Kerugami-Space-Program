@@ -10,6 +10,6 @@ C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/apollo.obj
 10
 C://Users/ricoz/Desktop/C++ Workspace/LoadOBJ/rocket2.obj
 100
-1000
+100
 1
 0.05

@@ -514,7 +514,7 @@ void drawMenu () {
 }
 
 // This method checks to see if any components needs to be added to the workspace
-void updateWorkspace () {
+void updateWorkspace () {// Scale the creen for the specific screen
 
     // Check to see if the mouse left click selection lands on a valid menu item. Each menu item is bounded by a 250 by 250 box
     if (leftX <= 250) {
@@ -590,7 +590,7 @@ void drawRocketAssembly () {
         double ytrans = 500;
         double ztrans = 0;
 
-        // Set color to the ompleted assembly union color black
+        // Set color to the completed assembly union color black
         glColor3d(0,0,0);
 
         glPushMatrix();
@@ -735,33 +735,77 @@ void launchRocket () {
 
 }
 
+// This void method draws the rocket launch simulation
+void drawRocketLaunch () {
+
+    // Draw a white background
+    glClearColor(1.0, 1.0, 1.0, 0.0);
+
+    // Draw each of the different components in the current assembly
+    for (int i=0; i<assembly.components.size(); i++) {
+
+        // Get the current obect to be drawn
+        vector<Object> obj = assembly.components[i];
+
+        // Set color to the completed assembly union color black
+        glColor3d(0,0,0);
+
+        glPushMatrix();
+
+            // Initialize the matrix modelview mode for glDraw display
+            glMatrixMode(GL_MODELVIEW);
+
+            // Draw the rocket
+            drawObject(obj, 500, v_pos, 0);
+
+        glPopMatrix();
+
+    }
+}
+
 // This is the default display method called by redraws. It contains code to distinguish the current stage of the game and draw the appropriate screen
 void display(void) {
 
     // Clear the current color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glLoadIdentity();
-    glOrtho(0, 1000, 0, 1000, -1200, 1200);
-
     // Draw the appropriate "stage" of the game depending on the user response
     switch (stage) {
 
         // Stage 0: intro screen
         case 0:
+
+            // Scale the creen for the specific screen
+            glLoadIdentity();
+            glOrtho(0, 1000, 0, 1000, -1200, 1200);
+
             // Draw the intro screen
             drawIntroScreen();
             break;
 
         // Stage 1: rocket assembly screen
         case 1:
+
+            // Scale the creen for the specific screen
+            glLoadIdentity();
+            glOrtho(0, 1000, 0, 1000, -1200, 1200);
+
             // Draw the rocket assembly screen
             drawRocketAssembly();
             break;
 
         // Stage 2: rocket launch screen
         case 2:
+
+            // Scale the creen for the specific screen
+            glLoadIdentity();
+            glOrtho(0, 20000, 0, 20000, -1200, 1200);
+
+            // Run rocket launching simulation
             launchRocket();
+            // Draw the rocket once simulation phase completes for current cycle
+            drawRocketLaunch();
+
             break;
 
     }
