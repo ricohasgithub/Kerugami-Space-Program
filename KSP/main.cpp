@@ -815,10 +815,11 @@ void launchRocket () {
 }
 
 // This void method draws the rocket launch simulation
-void drawRocketLaunch () {
+void drawRocketLaunch ()
+{
 
-    // Draw a white background
-    glClearColor(1.0, 1.0, 1.0, 0.0);
+    // Draw a shifting color background (the higher you are, the blacker the background becomes to emulate space)
+    glClearColor(1.0 - v_pos * 0.0005, 1.0- v_pos * 0.0005, 1.0- v_pos * 0.0005, 0.0);
 
     // Translate/Center the global perspective view (observer)
     glTranslated(-100, 0, 0);
@@ -826,36 +827,44 @@ void drawRocketLaunch () {
     // Rotate the entire global perspective view (observer)
     glRotated(30, 1, 0, 1);
 
+    glPushMatrix();
+
+    // Draw the ground
+    glBegin(GL_POLYGON);
+
+    // Set the color to green
+    glColor3f(0.0, 1.0, 0.0);
+
+    // To simulate the rockjet moving forwards without moving the entire perspective, move the ground backwards
+    double height = -200 - v_pos;
+
+    // Draw the ground plane at the new vertical position
+    glVertex3d(10000, height, 10000);
+    glVertex3d(-10000, height, 10000);
+    glVertex3d(-10000, height, -10000);
+    glVertex3d(10000, height, -10000);
+
+    glEnd();
+
+    glPopMatrix();
+
     // Draw each of the different components in the current assembly
-    for (int i=0; i<assembly.components.size(); i++) {
+    for (int i=0; i<assembly.components.size(); i++)
+    {
 
         // Get the current obect to be drawn
         vector<Object> obj = assembly.components[i];
 
         glPushMatrix();
 
-            // Initialize the matrix modelview mode for glDraw display
-            glMatrixMode(GL_MODELVIEW);
+        // Initialize the matrix modelview mode for glDraw display
+        glMatrixMode(GL_MODELVIEW);
 
-            // Draw the ground
-            glBegin(GL_POLYGON);
+        // Setr rocket color to blue
+        glColor3d(0, 0, 1);
 
-                // Set the color to green
-                glColor3f(0.0, 1.0, 0.0);
-
-                glVertex3d(1000, 0, 1000);
-                glVertex3d(-1000, 0, 1000);
-                glVertex3d(-1000, 0, -1000);
-                glVertex3d(1000, 0, -1000);
-
-            glEnd();
-
-            // Set color to the completed assembly union color black
-            glColor3d(0,0,0);
-
-            // Draw the rocket
-            drawObject(obj, 550, v_pos, -300);
-            //drawObject(obj, 0, v_pos, 0);
+        // Draw the rocket
+        drawObject(obj, 550, 0, -300);
 
         glPopMatrix();
 
@@ -1269,9 +1278,6 @@ int main( int argc, char **argv )
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
 
     glutMainLoop();
     return 0;
