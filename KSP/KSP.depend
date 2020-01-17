@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1579114213 source:c:\users\ricoz\desktop\c++ workspace\kerugami-space-program\ksp\main.cpp
+1579233266 source:c:\users\ricoz\desktop\c++ workspace\kerugami-space-program\ksp\main.cpp
 	<windows.h>
 	<GLUT/glut.h>
 	<GL/glut.h>

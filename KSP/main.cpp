@@ -14,6 +14,32 @@
 #include <sstream>
 #include <cmath>
 
+/*
+
+    Kerugami Space Program              Rico Zhu    Januray 16th, 2020
+
+    This program is based on the popular 2011 game, Kerbal Space Program.
+    The objective of this game is to help a fictional alien race reach
+    the depth of space (5000 in height in the game). The player must contruct
+    a rocket from provided components and then launch the rocket to test if
+    they have achieved the task.
+
+    If they were successful (rocket reached a vertical position of 5000), the
+    game provides a winning screen. But if the player loses (crashes the rocket),
+    the player is provided the oppurtunity to try again.
+
+    The game is made of multiple "stages", or various screens and interactions.
+
+    The list goes:
+
+    Stage 0: Introduction
+    Stage 1: Rocket Assembly
+    Stage 2: Rocket Launch
+    Stage 3: A Wild Success!
+    Stage 4: Try again
+
+*/
+
 using namespace std;
 
 // This struct represents one unit of a point in 3-dimensional space
@@ -50,6 +76,7 @@ struct Object
 
 };
 
+// This struct is used to represent a "grouping", or "assembly", of components (which in turn contains sub-components). This is used to represent the playe constructed rocket in the game
 struct Union
 {
     vector<vector<Object> > components;
@@ -410,6 +437,9 @@ double dtime = 0.0;
 // Gravitational acceleration on the surface of the Earth (assuming no increase in decelleration as rocket gors further up)
 const double g_accl = -9.8;
 
+// This boolean variable is used to determine whether the user has pressed B yet in the rocket launch screen
+bool BLASTOFF = false;
+
 // This void method takes in a list of items to be displayed "rotating" in display menu. The screen is assumed to be (0, 1000, 0, 1000, -1000, 1000). The method pipes the scaled models to the menu global vector
 void initMenu (vector<vector<Object> > items) {
 
@@ -493,7 +523,9 @@ void drawMenu () {
 
         glColor3f(0, 0, 1);
 
+        // Draw the component
         drawObject(component, startX, startY, startZ);
+        // Increment the position for the next box
         startY -= 250;
 
     }
@@ -650,6 +682,42 @@ void drawRocketAssembly () {
 
 }
 
+// This void method draws the winning screen. Called when the player reaches "space" (a pre-determined height)
+void drawWinScreen () {
+
+    // Draw a black background
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+
+    // Render the winning text across the screen
+
+    // Set the draw color to white
+    glColor3f(1.0, 1.0, 1.0);
+
+    // Render the intro text as seperate lines
+    renderString(450, 450, GLUT_BITMAP_HELVETICA_18, "Congratulations! You successful made it to space!");
+    renderString(550, 350, GLUT_BITMAP_HELVETICA_18, "What will be the next frontier?");
+
+}
+
+// This void method draws the losing screen. Called when the player crashes their rocket during launch.
+void drawLosingScreen () {
+
+    // Draw a black background
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+
+    // Render the losing text across the screen
+
+    // Set the draw color to white
+    glColor3f(1.0, 1.0, 1.0);
+
+    // Render the intro text as seperate lines
+    renderString(610, 420, GLUT_BITMAP_HELVETICA_18, "Uh oh! Rocket crashed!");
+    renderString(550, 350, GLUT_BITMAP_HELVETICA_18, "Back to the drawing boards!");
+    renderString(550, 250, GLUT_BITMAP_HELVETICA_18, "Press SPACE to restart");
+
+
+}
+
 // This void method sets up the constants for the current iteration of the rocket (assembly)
 void updateRocketPhysics () {
 
@@ -678,17 +746,13 @@ void updateRocketPhysics () {
     // Update the initial vertical velocity to the total starting thrust
     v_vel = totalThrust;
 
+    // Reset vertical position (v_pos)
+    v_pos = 0;
+
 }
 
 // This void method does translation operations on the assembled rocket based on its physics engine values
 void launchRocket () {
-
-    if (v_pos < 0) {
-
-        // If the rocket crashed (goes below groun), stop further calls
-        return;
-
-    }
 
     // Get the curretn elapsed time
     const double time = glutGet(GLUT_ELAPSED_TIME) / 10000.0;
@@ -725,13 +789,28 @@ void launchRocket () {
     // update the vertical position (accumulated velocity over time)
     v_pos += v_vel * dtime;
 
-    cout << "Position: " << v_pos << endl;
-    cout << "Velocity: " << v_vel << endl;
-    cout << "Acceleration: " << v_accl << endl;
+    // Check winning and losing conditions
 
+    if (v_pos < 0) {
 
+        // If the rocket crashed (goes below ground), stop further calls. Print Losing Screen (stage 4)
+        stage = 4;
 
-    // Draw the rocket
+        // Reset BLASTOFF (so that a relaunch would not be instantly activated)
+        BLASTOFF = false;
+
+        return;
+
+    } else if (v_pos >= 5000) {
+
+        // If the rocket has reached a pre-determined "space" height of 5000, print winning screen (stage 3)
+        stage = 3;
+
+        // End the current method call
+        return;
+
+    }
+
 
 }
 
@@ -741,26 +820,57 @@ void drawRocketLaunch () {
     // Draw a white background
     glClearColor(1.0, 1.0, 1.0, 0.0);
 
+    // Translate/Center the global perspective view (observer)
+    glTranslated(-100, 0, 0);
+
+    // Rotate the entire global perspective view (observer)
+    glRotated(30, 1, 0, 1);
+
     // Draw each of the different components in the current assembly
     for (int i=0; i<assembly.components.size(); i++) {
 
         // Get the current obect to be drawn
         vector<Object> obj = assembly.components[i];
 
-        // Set color to the completed assembly union color black
-        glColor3d(0,0,0);
-
         glPushMatrix();
 
             // Initialize the matrix modelview mode for glDraw display
             glMatrixMode(GL_MODELVIEW);
 
+            // Draw the ground
+            glBegin(GL_POLYGON);
+
+                // Set the color to green
+                glColor3f(0.0, 1.0, 0.0);
+
+                glVertex3d(1000, 0, 1000);
+                glVertex3d(-1000, 0, 1000);
+                glVertex3d(-1000, 0, -1000);
+                glVertex3d(1000, 0, -1000);
+
+            glEnd();
+
+            // Set color to the completed assembly union color black
+            glColor3d(0,0,0);
+
             // Draw the rocket
-            drawObject(obj, 500, v_pos, 0);
+            drawObject(obj, 550, v_pos, -300);
+            //drawObject(obj, 0, v_pos, 0);
 
         glPopMatrix();
 
     }
+}
+
+// This void method clears the entire workspace and assembly
+void launchNewWorkspace () {
+
+    // Delete everything in the workspace
+    workspace.erase(workspace.begin(), workspace.end());
+
+    // Delete everything in the assembly
+    assembly.components.erase(assembly.components.begin(), assembly.components.end());
+
 }
 
 // This is the default display method called by redraws. It contains code to distinguish the current stage of the game and draw the appropriate screen
@@ -799,12 +909,33 @@ void display(void) {
 
             // Scale the creen for the specific screen
             glLoadIdentity();
-            glOrtho(0, 20000, 0, 20000, -1200, 1200);
+            //glOrtho(0, 20000, 0, 20000, -1200, 1200);
+            glOrtho(0, 1000, 0, 1000, -1200, 1200);
 
-            // Run rocket launching simulation
-            launchRocket();
+            // Check to see if the user has launched their rocket yet
+            if (BLASTOFF) {
+
+                // If so, run rocket physics/launching simulation
+                launchRocket();
+
+            }
+
             // Draw the rocket once simulation phase completes for current cycle
             drawRocketLaunch();
+
+            break;
+
+        case 3:
+
+            // Player has reached space and won the game
+            drawWinScreen();
+
+            break;
+
+        case 4:
+
+            // Player just lost the game; launch try again screen with steps for relaunch
+            drawLosingScreen();
 
             break;
 
@@ -994,7 +1125,7 @@ void keyboardListener (unsigned char key, int x, int y) {
 
             // Stage 1: Rocket assembly stage
 
-            if (key == 32) {
+            if (key == 32 && assembly.components.size() > 0) {
 
                 // Player pressed space bar, move onto next stage (rocket launch, stage 2)
                 stage = 2;
@@ -1061,6 +1192,50 @@ void keyboardListener (unsigned char key, int x, int y) {
                 assembleComponents(workspace);
                 // Reset the selected variable as no item is selected
                 selected = -1;
+
+            }
+
+            break;
+
+        case 2:
+
+            // Stage 2: Rocket launch stage
+
+            if (key == 'b') {
+
+                // The player pressed 'b' (for Blastoff!); launch the rocket
+
+                // Update the blastoff boolean variable
+                BLASTOFF = true;
+                // Refresh the screen
+                glutPostRedisplay();
+                // Terminate the drawing call
+                break;
+
+            }
+
+            break;
+
+        case 4:
+
+            // Stage 4: Losing screen (rocket crash!)
+
+            if (key == 32) {
+
+                // The player just pressed the space bar; reset their rocket and relaunch stage 1 (rocket assembly). Back to the drawing boards!
+
+                // Clear the previous assembly and workspace
+                launchNewWorkspace();
+
+                // Update the new stage (back to stage 1)
+                stage = 1;
+
+                // Redraw the screen
+                glutPostRedisplay();
+
+                // End the current call
+                break;
+
             }
 
             break;
@@ -1068,17 +1243,6 @@ void keyboardListener (unsigned char key, int x, int y) {
     }
 
 }
-
-// Arrays mapping to texture and lighting/shading constants
-const GLfloat light_ambient[]  = { 0.0f, 0.0f, 0.0f, 1.0f };
-const GLfloat light_diffuse[]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat light_position[] = { 1000.0f, 1000.0f, 0.0f, 0.0f };
-
-const GLfloat mat_ambient[]    = { 0.7f, 0.7f, 0.7f, 1.0f };
-const GLfloat mat_diffuse[]    = { 0.8f, 0.8f, 0.8f, 1.0f };
-const GLfloat mat_specular[]   = { 1.0f, 1.0f, 1.0f, 1.0f };
-const GLfloat high_shininess[] = { 100.0f };
 
 int main( int argc, char **argv )
 {
@@ -1108,22 +1272,6 @@ int main( int argc, char **argv )
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-
-    // Enable materials rendering
- /*   glEnable(GL_LIGHT0);
-    glEnable(GL_NORMALIZE);
-    glEnable(GL_COLOR_MATERIAL);
-    glEnable(GL_LIGHTING);
-
-    glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
-    glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-
-    glMaterialfv(GL_FRONT, GL_AMBIENT,   mat_ambient);
-    glMaterialfv(GL_FRONT, GL_DIFFUSE,   mat_diffuse);
-    glMaterialfv(GL_FRONT, GL_SPECULAR,  mat_specular);
-    glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);*/
 
     glutMainLoop();
     return 0;
